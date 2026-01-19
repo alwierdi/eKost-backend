@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  RESERVED
+}
+
+enum RoomCondition {
+  NORMAL
+  NEED_REPAIR
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  // relations
+  tenancies  Tenancy[]
+  complaints Complaint[]        @relation("TenantComplaints")
+  messages   ComplaintMessage[]
+
+  @@map("users")
+}
+
+model Room {
+  id              String        @id @default(uuid())
+  roomNumber      String
+  conditionStatus RoomCondition @default(NORMAL)
+
+  createdAt DateTime @default(now())
+
+  // relations
+  tenancies  Tenancy[]
+  complaints Complaint[]
+
+  @@map("rooms")
+}
+
+model Tenancy {
+  id     String @id @default(uuid())
+  userId String
+  roomId String
+
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+
+  // relations
+  user User @relation(fields: [userId], references: [id])
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@index([userId])
+  @@index([roomId])
+  @@map("tenancies")
+}
+
+model Complaint {
+  id       String @id @default(uuid())
+  tenantId String
+  roomId   String
+
+  title       String
+  description String
+  status      ComplaintStatus @default(OPEN)
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+
+  // relations
+  tenant User @relation("TenantComplaints", fields: [tenantId], references: [id])
+
+  room        Room                  @relation(fields: [roomId], references: [id])
+  messages    ComplaintMessage[]
+  attachments ComplaintAttachment[]
+  feedback    ComplaintFeedback?
+
+  @@index([tenantId])
+  @@index([roomId])
+  @@map("complaints")
+}
+
+model ComplaintMessage {
+  id          String @id @default(uuid())
+  complaintId String
+  senderId    String
+
+  message   String
+  createdAt DateTime @default(now())
+
+  // relations
+  complaint Complaint @relation(fields: [complaintId], references: [id])
+  sender    User      @relation(fields: [senderId], references: [id])
+
+  @@index([complaintId])
+  @@index([senderId])
+  @@map("complaint_messages")
+}
+
+model ComplaintAttachment {
+  id          String @id @default(uuid())
+  complaintId String
+  filePath    String
+
+  createdAt DateTime @default(now())
+
+  // relations
+  complaint Complaint @relation(fields: [complaintId], references: [id])
+
+  @@index([complaintId])
+  @@map("complaint_attachments")
+}
+
+model ComplaintFeedback {
+  id          String @id @default(uuid())
+  complaintId String @unique
+
+  rating Int
+  note   String?
+
+  createdAt DateTime @default(now())
+
+  // relations
+  complaint Complaint @relation(fields: [complaintId], references: [id])
+
+  @@map("complaint_feedback")
+}
