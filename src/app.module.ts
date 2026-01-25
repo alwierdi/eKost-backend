@@ -6,6 +6,7 @@ import { PrismaModule } from './infra/database/prisma.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './infra/auth/auth';
+import { RoomsModule } from './modules/rooms/rooms.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { auth } from './infra/auth/auth';
     }),
     PrismaModule,
     UserModule,
+    RoomsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
