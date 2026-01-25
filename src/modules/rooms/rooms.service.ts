@@ -8,6 +8,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { QueryRoomDto } from './dto/query-room.dto';
 import { Prisma, RoomStatus } from 'generated/prisma/client';
+import { BulkUpdateConditionDto } from './dto/bulk-update-condition.dto';
 
 @Injectable()
 export class RoomsService {
@@ -198,5 +199,90 @@ export class RoomsService {
     return this.prisma.room.delete({
       where: { id },
     });
+  }
+
+  async bulkUpdateCondition(bulkUpdateDto: BulkUpdateConditionDto) {
+    const { roomIds, conditionStatus } = bulkUpdateDto;
+
+    const rooms = await this.prisma.room.findMany({
+      where: { id: { in: roomIds } },
+    });
+
+    if (rooms.length !== roomIds.length) {
+      throw new NotFoundException('One or more rooms not found');
+    }
+
+    const result = await this.prisma.room.updateMany({
+      where: { id: { in: roomIds } },
+      data: { conditionStatus },
+    });
+
+    return {
+      updated: result.count,
+      conditionStatus,
+    };
+  }
+
+  async getAvailabilitySummary() {
+    const [total, occupied, needRepair] = await Promise.all([
+      this.prisma.room.count(),
+      this.prisma.room.count({
+        where: {
+          tenancies: {
+            some: { isActive: true },
+          },
+        },
+      }),
+      this.prisma.room.count({
+        where: { conditionStatus: 'NEED_REPAIR' },
+      }),
+    ]);
+
+    const available = total - occupied;
+
+    return {
+      total,
+      available,
+      occupied,
+      needRepair,
+      occupancyRate: total > 0 ? ((occupied / total) * 100).toFixed(2) : 0,
+    };
+  }
+
+  async getRoomHistory(id: string) {
+    await this.findOne(id);
+
+    const tenancies = await this.prisma.tenancy.findMany({
+      where: { roomId: id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: { startDate: 'desc' },
+    });
+
+    return {
+      roomId: id,
+      totalTenants: tenancies.length,
+      tenancies,
+    };
+  }
+
+  async checkAvailability(id: string) {
+    const room = await this.findOne(id);
+
+    return {
+      roomId: id,
+      roomNumber: room.roomNumber,
+      isAvailable: room.isAvailable,
+      conditionStatus: room.conditionStatus,
+      currentTenant: room.currentTenant,
+      activeTenancy: room.activeTenancy,
+    };
   }
 }
