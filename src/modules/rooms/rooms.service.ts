@@ -94,7 +94,7 @@ export class RoomsService {
     const dataWithAvailability = data.map((room) => ({
       ...room,
       isAvailable: room.status === RoomStatus.AVAILABLE,
-      currentTenant: room.tenancies[0].user || null,
+      currentTenant: room.tenancies[0]?.user || null,
     }));
 
     return {

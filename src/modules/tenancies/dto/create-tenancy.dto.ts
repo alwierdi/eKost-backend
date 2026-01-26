@@ -1,4 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateTenancyDto {
   @IsString()
@@ -9,11 +14,11 @@ export class CreateTenancyDto {
   @IsNotEmpty()
   roomId: string;
 
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
   startDate: string;
 
-  @IsString()
+  @IsDateString()
   @IsOptional()
   endDate?: string;
 }
