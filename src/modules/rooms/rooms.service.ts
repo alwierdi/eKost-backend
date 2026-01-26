@@ -100,6 +100,7 @@ export class RoomsService {
     }));
 
     return {
+      // message: 'Rooms fetched successfully',
       data: dataWithAvailability,
       meta: {
         total,
@@ -153,7 +154,7 @@ export class RoomsService {
     });
 
     if (!room) {
-      throw new NotFoundException(`Room with ID ${id} not found`);
+      throw new NotFoundException('Room not found');
     }
 
     const activeTenancy = room.tenancies.find((tenancy) => tenancy.isActive);

@@ -27,6 +27,12 @@ export type ApiPaginated<T> = {
   meta: Record<string, unknown>;
 };
 
+export type ApiMessagePayload<T = unknown> = {
+  message: string;
+  data: T;
+  meta?: Record<string, unknown>;
+};
+
 export function isApiResponse(value: unknown): value is ApiResponse<unknown> {
   return (
     typeof value === 'object' &&
@@ -34,6 +40,14 @@ export function isApiResponse(value: unknown): value is ApiResponse<unknown> {
     'success' in value &&
     typeof (value as { success?: unknown }).success === 'boolean'
   );
+}
+
+export function isMessagePayload(
+  value: unknown,
+): value is ApiMessagePayload<unknown> {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.message === 'string' && 'data' in v;
 }
 
 export function isPaginatedPayload(

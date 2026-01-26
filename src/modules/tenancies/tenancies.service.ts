@@ -23,7 +23,7 @@ export class TenanciesService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+      throw new NotFoundException('User not found');
     }
 
     const room = await this.prisma.room.findUnique({
@@ -31,7 +31,7 @@ export class TenanciesService {
     });
 
     if (!room) {
-      throw new NotFoundException(`Room with ID ${roomId} not found`);
+      throw new NotFoundException('Room not found');
     }
 
     const existingActiveTenancy = await this.prisma.tenancy.findFirst({
@@ -175,7 +175,7 @@ export class TenanciesService {
     });
 
     if (!tenancy) {
-      throw new NotFoundException(`Tenancy with ID ${id} not found`);
+      throw new NotFoundException('Tenancy not found');
     }
 
     return {

@@ -8,6 +8,9 @@ import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './infra/auth/auth';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { TenanciesModule } from './modules/tenancies/tenancies.module';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './common/http/response.interceptor';
+import { AllExceptionsFilter } from './common/http/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -24,6 +27,16 @@ import { TenanciesModule } from './modules/tenancies/tenancies.module';
     TenanciesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

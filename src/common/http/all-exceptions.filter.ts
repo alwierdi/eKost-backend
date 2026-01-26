@@ -15,12 +15,16 @@ function isPrismaKnownError(
 ): err is PrismaClientKnownRequestError {
   if (err instanceof PrismaClientKnownRequestError) return true;
   // Fallback (in case the error crosses package boundaries)
+
+  const name = (err as { name?: unknown }).name;
+
   return (
     typeof err === 'object' &&
     err !== null &&
     'code' in err &&
     typeof (err as { code?: unknown }).code === 'string' &&
-    String((err as { name?: unknown }).name ?? '').includes('Prisma')
+    typeof name === 'string' &&
+    name.includes('Prisma')
   );
 }
 

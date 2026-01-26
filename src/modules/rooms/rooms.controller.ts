@@ -15,6 +15,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { QueryRoomDto } from './dto/query-room.dto';
 import { BulkUpdateConditionDto } from './dto/bulk-update-condition.dto';
+import { ApiMessage } from 'src/common/http/api-message.decorator';
 
 @Controller('rooms')
 export class RoomsController {
@@ -27,6 +28,7 @@ export class RoomsController {
   }
 
   @Get()
+  @ApiMessage('Rooms fetched successfully')
   findAll(@Query() query: QueryRoomDto) {
     return this.roomsService.findAll(query);
   }

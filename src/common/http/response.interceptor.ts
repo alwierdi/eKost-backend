@@ -4,6 +4,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { Observable } from 'rxjs';
@@ -12,8 +13,10 @@ import {
   ApiResponse,
   ApiSuccessResponse,
   isApiResponse,
+  isMessagePayload,
   isPaginatedPayload,
 } from './api-response';
+import { API_MESSAGE_KEY } from './api-message.decorator';
 
 function defaultMessageFromStatus(statusCode: number): string {
   if (statusCode === 201) return 'Created';
@@ -24,6 +27,8 @@ function defaultMessageFromStatus(statusCode: number): string {
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
+  constructor(private readonly reflector: Reflector) {}
+
   intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -54,13 +59,32 @@ export class ResponseInterceptor implements NestInterceptor {
 
         const timestamp = new Date().toISOString();
         const path = req.originalUrl || req.url;
-        const message = defaultMessageFromStatus(res.statusCode);
+        const decoratedMessage =
+          this.reflector.get<string>(API_MESSAGE_KEY, context.getHandler()) ??
+          this.reflector.get<string>(API_MESSAGE_KEY, context.getClass());
+
+        const defaultMessage =
+          res.statusMessage || defaultMessageFromStatus(res.statusCode);
+
+        // Allow services/controllers to return { message, data, meta? } as an override.
+        if (isMessagePayload(value)) {
+          const body: ApiSuccessResponse<unknown> = {
+            success: true,
+            message: value.message,
+            data: value.data,
+            meta: value.meta,
+            timestamp,
+            path,
+            requestId,
+          };
+          return body;
+        }
 
         // Lift pagination meta if services return { data, meta }.
         if (isPaginatedPayload(value)) {
           const body: ApiSuccessResponse<unknown> = {
             success: true,
-            message,
+            message: decoratedMessage ?? defaultMessage,
             data: value.data,
             meta: value.meta,
             timestamp,
@@ -72,7 +96,7 @@ export class ResponseInterceptor implements NestInterceptor {
 
         const body: ApiSuccessResponse<unknown> = {
           success: true,
-          message,
+          message: decoratedMessage ?? defaultMessage,
           data: value,
           timestamp,
           path,
