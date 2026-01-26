@@ -21,7 +21,9 @@ export class RoomsService {
     });
 
     if (existingRoom) {
-      throw new Error(`Room number ${createRoomDto.roomNumber} already exists`);
+      throw new ConflictException(
+        `Room number ${createRoomDto.roomNumber} already exists`,
+      );
     }
 
     return this.prisma.room.create({
