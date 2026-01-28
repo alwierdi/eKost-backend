@@ -16,6 +16,7 @@ import { UpdateTenancyDto } from './dto/update-tenancy.dto';
 import { QueryTenancyDto } from './dto/query-tenancy.dto';
 import { EndTenancyDto } from './dto/end-tenancy.dto';
 import { ExtendTenancyDto } from './dto/extend-tenancy.dto';
+import { ApiMessage } from 'src/common/http/api-message.decorator';
 
 @Controller('tenancies')
 export class TenanciesController {
@@ -28,6 +29,7 @@ export class TenanciesController {
   }
 
   @Get()
+  @ApiMessage('Tenancies fetched successfully')
   findAll(@Query() query: QueryTenancyDto) {
     return this.tenanciesService.findAll(query);
   }
